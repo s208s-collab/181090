@@ -6,6 +6,7 @@
   const REFRESH_INTERVAL_MS = 4000;
   let isLoading = false;
   let allOrders = [];
+  let lastOrdersFingerprint = "";
 
   const STATUS = [
     ["Новый", "new"],
@@ -151,7 +152,13 @@
     return selectedStatus ? orders.filter((order) => order.status === selectedStatus) : orders;
   }
 
+  function ordersFingerprint(orders) {
+    // Не перерисовываем список без изменений: это сохраняет место прокрутки.
+    return JSON.stringify(orders);
+  }
+
   function renderOrders(orders) {
+    const scrollTop = window.scrollY;
     elements.orders.replaceChildren();
     const visible = visibleOrders(orders);
     elements.count.textContent = String(visible.length);
@@ -275,6 +282,9 @@
       card.append(inner);
       elements.orders.append(card);
     }
+
+    // При реальном обновлении заказа оставляем пользователя на том же месте списка.
+    window.requestAnimationFrame(() => window.scrollTo({ top: scrollTop, left: 0 }));
   }
 
   async function saveUpdate(orderId, data, control) {
@@ -316,8 +326,13 @@
     isLoading = true;
     elements.refresh.disabled = true;
     try {
-      allOrders = await request("/api/orders");
-      renderOrders(allOrders);
+      const nextOrders = await request("/api/orders");
+      const nextFingerprint = ordersFingerprint(nextOrders);
+      allOrders = nextOrders;
+      if (nextFingerprint !== lastOrdersFingerprint) {
+        renderOrders(allOrders);
+        lastOrdersFingerprint = nextFingerprint;
+      }
       setError();
       elements.sync.textContent = `Обновлено ${new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
     } catch (error) {
