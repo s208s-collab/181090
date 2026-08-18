@@ -10,14 +10,12 @@
   let lastOrdersFingerprint = "";
 
   const STATUS = [
-    ["Новый", "new"],
-    ["На сборку", "assembly-queue"],
     ["Собирается", "assembling"],
     ["Не хватает позиции", "missing-item"],
-    ["Собран", "assembled"],
-    ["Передан в доставку", "handed-to-delivery"],
-    ["Отправлен СДЭК", "sent-cdek"],
-    ["Передан курьеру", "handed-to-courier"],
+    ["Собран курьеру", "assembled-for-courier"],
+    ["Собран на СДЭК", "assembled-for-cdek"],
+    ["Везу сам заказ", "self-delivery"],
+    ["Передан стороннему курьеру", "third-party-courier"],
     ["Доставлен", "delivered"],
   ];
   const statusClass = Object.fromEntries(STATUS);
@@ -134,6 +132,40 @@
     if (!copied) throw new Error("Не удалось скопировать текст.");
   }
 
+  function addPhoneCopyButtons(container, phones) {
+    const uniquePhones = phones.filter((phone, index) =>
+      phones.findIndex((candidate) => candidate.href === phone.href) === index
+    );
+    if (uniquePhones.length === 0) return;
+
+    const phoneActions = document.createElement("div");
+    phoneActions.className = "phone-actions";
+    for (const phone of uniquePhones) {
+      const copyPhone = document.createElement("button");
+      copyPhone.className = "phone-copy-button";
+      copyPhone.type = "button";
+      copyPhone.textContent = `Копировать номер ${phone.value}`;
+      copyPhone.addEventListener("click", async () => {
+        copyPhone.disabled = true;
+        setError();
+        try {
+          await copyText(phone.value);
+          copyPhone.textContent = "Номер скопирован ✓";
+          tg?.HapticFeedback?.notificationOccurred("success");
+          window.setTimeout(() => {
+            copyPhone.textContent = `Копировать номер ${phone.value}`;
+            copyPhone.disabled = false;
+          }, 1800);
+        } catch (error) {
+          copyPhone.disabled = false;
+          setError(error.message || "Не удалось скопировать номер.");
+        }
+      });
+      phoneActions.append(copyPhone);
+    }
+    container.append(phoneActions);
+  }
+
   function openOwnerChat() {
     if (tg?.openTelegramLink) {
       tg.openTelegramLink(OWNER_TELEGRAM_URL);
@@ -144,6 +176,7 @@
 
   function orderTextForOwner(order, displayNumber) {
     const parts = [`Заказ №${displayNumber}`, "", order.message_text, "", `Статус: ${order.status}`];
+    if (order.cdek_tracking_number?.trim()) parts.push(`Трек СДЭК: ${order.cdek_tracking_number.trim()}`);
     if (order.comment?.trim()) parts.push(`Комментарий: ${order.comment.trim()}`);
     return parts.join("\n");
   }
@@ -194,7 +227,7 @@
     }
 
     for (const order of visible) {
-      const status = statusClass[order.status] || "new";
+      const status = statusClass[order.status] || "assembling";
       const displayNumber = order.order_number || String(order.id);
       const card = document.createElement("article");
       card.className = `order-card status-${status}`;
@@ -222,6 +255,18 @@
         source.textContent = `Переслано от: ${order.forwarded_from}`;
         inner.append(source);
       }
+
+      const cdekTrackLabel = document.createElement("label");
+      cdekTrackLabel.className = "comment-label";
+      cdekTrackLabel.textContent = "Трек СДЭК";
+      const cdekTrack = document.createElement("input");
+      cdekTrack.className = "cdek-track-field";
+      cdekTrack.type = "text";
+      cdekTrack.maxLength = 128;
+      cdekTrack.value = order.cdek_tracking_number || "";
+      cdekTrack.placeholder = "Например: 1234567890";
+      cdekTrack.setAttribute("aria-label", `Трек СДЭК заказа №${displayNumber}`);
+      inner.append(cdekTrackLabel, cdekTrack);
 
       const messageHeader = document.createElement("div");
       messageHeader.className = "message-header";
@@ -251,6 +296,7 @@
       const phones = phoneMatches(order.message_text);
       appendMessageWithPhoneLinks(message, order.message_text, phones);
       inner.append(messageHeader, message);
+      addPhoneCopyButtons(inner, phones);
 
       const commentLabel = document.createElement("label");
       commentLabel.className = "comment-label";
@@ -268,8 +314,11 @@
       const save = document.createElement("button");
       save.className = "save-button";
       save.type = "button";
-      save.textContent = "Сохранить комментарий";
-      save.addEventListener("click", () => saveUpdate(order.id, { comment: textarea.value }, save));
+      save.textContent = "Сохранить данные";
+      save.addEventListener("click", () => saveUpdate(order.id, {
+        comment: textarea.value,
+        cdek_tracking_number: cdekTrack.value,
+      }, save));
       const contactOwner = document.createElement("button");
       contactOwner.className = "contact-owner-button";
       contactOwner.type = "button";
@@ -333,7 +382,10 @@
   }
 
   async function loadOrders() {
-    if (isLoading || document.activeElement?.classList?.contains("comment-field")) return;
+    if (
+      isLoading || document.activeElement?.classList?.contains("comment-field")
+      || document.activeElement?.classList?.contains("cdek-track-field")
+    ) return;
     isLoading = true;
     elements.refresh.disabled = true;
     try {
