@@ -69,7 +69,7 @@ def create_order_from_message(message: Message) -> Order:
         order = Order(
             message_text=text,
             comment="",
-            status=OrderStatus.NEW.value,
+            status=OrderStatus.ASSEMBLING.value,
             forwarded_from=_forwarded_name(message),
             created_by_telegram_id=author.id if author else None,
             created_by_name=author.full_name if author else None,
@@ -84,6 +84,7 @@ def create_order_from_message(message: Message) -> Order:
 async def start(message: Message) -> None:
     if await _deny_if_needed(message):
         return
+    # Убираем старую reply-клавиатуру до отправки авторизованной Mini App-кнопки.
     await message.answer(
         "Здравствуйте! Перешлите мне сообщение с заказом — я добавлю его в общий список.",
         reply_markup=ReplyKeyboardRemove(),
@@ -122,7 +123,7 @@ async def forwarded_order(message: Message) -> None:
         return
     order = create_order_from_message(message)
     await message.answer(
-        f"Заказ №{order.id} добавлен со статусом «{OrderStatus.NEW.value}».\n"
+        f"Заказ №{order.order_number} добавлен со статусом «{OrderStatus.ASSEMBLING.value}».\n"
         "Откройте список, чтобы добавить комментарий или изменить статус.",
         reply_markup=orders_keyboard(),
     )
