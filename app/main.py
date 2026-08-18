@@ -72,6 +72,8 @@ async def update_order(
         order.status = update.status.value
     if update.comment is not None:
         order.comment = update.comment.strip()
+    if update.cdek_tracking_number is not None:
+        order.cdek_tracking_number = update.cdek_tracking_number.strip()
     order.updated_by_telegram_id = user.telegram_id
     order.updated_by_name = user.name
     session.commit()
