@@ -219,9 +219,29 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
   cursor: pointer;
 }
 
-.comment-field {
+.phone-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: -6px 0 14px;
+}
+
+.phone-copy-button {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid #c98b48;
+  border-radius: 8px;
+  background: #fff6ea;
+  color: #925419;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.phone-copy-button:disabled { cursor: wait; opacity: 0.7; }
+
+.comment-field, .cdek-track-field {
   width: 100%;
-  min-height: 72px;
   resize: vertical;
   padding: 9px 10px;
   border: 1px solid var(--line);
@@ -232,7 +252,10 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
   line-height: 1.35;
 }
 
-.comment-field:focus, .status-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
+.comment-field { min-height: 72px; }
+.cdek-track-field { min-height: 42px; margin-bottom: 14px; resize: none; }
+
+.comment-field:focus, .cdek-track-field:focus, .status-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent); }
 
 .card-footer {
   display: flex;
@@ -308,14 +331,12 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
   line-height: 1.35;
 }
 
-.status-new { --status-color: #879148; }
-.status-assembly-queue { --status-color: #c57a10; }
 .status-assembling { --status-color: #357abd; }
 .status-missing-item { --status-color: #bd3e3e; }
-.status-assembled { --status-color: #16866e; }
-.status-handed-to-delivery { --status-color: #8b5cb7; }
-.status-sent-cdek { --status-color: #d06b22; }
-.status-handed-to-courier { --status-color: #227c9d; }
+.status-assembled-for-courier { --status-color: #16866e; }
+.status-assembled-for-cdek { --status-color: #d06b22; }
+.status-self-delivery { --status-color: #8b5cb7; }
+.status-third-party-courier { --status-color: #227c9d; }
 .status-delivered { --status-color: #2b9b51; }
 
 @media (min-width: 760px) {
