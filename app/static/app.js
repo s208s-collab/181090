@@ -4,6 +4,7 @@
   const tg = window.Telegram?.WebApp;
   const isDevBrowser = new URLSearchParams(window.location.search).get("dev") === "1";
   const REFRESH_INTERVAL_MS = 4000;
+  const OWNER_TELEGRAM_URL = "https://t.me/Sss208s";
   let isLoading = false;
   let allOrders = [];
   let lastOrdersFingerprint = "";
@@ -30,6 +31,7 @@
     sync: document.querySelector("#sync-status"),
     error: document.querySelector("#app-error"),
     refresh: document.querySelector("#refresh-button"),
+    contactOwner: document.querySelector("#contact-owner-button"),
     statusFilter: document.querySelector("#status-filter"),
   };
 
@@ -130,6 +132,33 @@
     const copied = document.execCommand("copy");
     helper.remove();
     if (!copied) throw new Error("Не удалось скопировать текст.");
+  }
+
+  function openOwnerChat() {
+    if (tg?.openTelegramLink) {
+      tg.openTelegramLink(OWNER_TELEGRAM_URL);
+      return;
+    }
+    window.location.href = OWNER_TELEGRAM_URL;
+  }
+
+  function orderTextForOwner(order, displayNumber) {
+    const parts = [`Заказ №${displayNumber}`, "", order.message_text, "", `Статус: ${order.status}`];
+    if (order.comment?.trim()) parts.push(`Комментарий: ${order.comment.trim()}`);
+    return parts.join("\n");
+  }
+
+  async function copyAndContactOwner(order, displayNumber, control) {
+    control.disabled = true;
+    setError();
+    try {
+      await copyText(orderTextForOwner(order, displayNumber));
+      tg?.HapticFeedback?.notificationOccurred("success");
+      openOwnerChat();
+    } catch (error) {
+      setError(error.message || "Не удалось скопировать заказ.");
+      control.disabled = false;
+    }
   }
 
   function setupStatusFilter() {
@@ -241,6 +270,11 @@
       save.type = "button";
       save.textContent = "Сохранить комментарий";
       save.addEventListener("click", () => saveUpdate(order.id, { comment: textarea.value }, save));
+      const contactOwner = document.createElement("button");
+      contactOwner.className = "contact-owner-button";
+      contactOwner.type = "button";
+      contactOwner.textContent = "Скопировать и написать";
+      contactOwner.addEventListener("click", () => copyAndContactOwner(order, displayNumber, contactOwner));
       const remove = document.createElement("button");
       remove.className = "delete-button";
       remove.type = "button";
@@ -248,7 +282,7 @@
       remove.addEventListener("click", () => deleteOrder(order.id, displayNumber, remove));
       const actions = document.createElement("div");
       actions.className = "card-actions";
-      actions.append(save, remove);
+      actions.append(save, contactOwner, remove);
       const meta = document.createElement("p");
       meta.className = "meta";
       meta.textContent = order.updated_by_name
@@ -322,6 +356,7 @@
   }
 
   elements.refresh.addEventListener("click", loadOrders);
+  elements.contactOwner.addEventListener("click", openOwnerChat);
   setupStatusFilter();
   loadOrders();
   window.setInterval(loadOrders, REFRESH_INTERVAL_MS);
