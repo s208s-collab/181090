@@ -10,11 +10,12 @@ from app.models import OrderStatus
 class OrderUpdate(BaseModel):
     status: OrderStatus | None = None
     comment: str | None = Field(default=None, max_length=2000)
+    cdek_tracking_number: str | None = Field(default=None, max_length=128)
 
     @model_validator(mode="after")
     def has_a_change(self):
-        if self.status is None and self.comment is None:
-            raise ValueError("Передайте статус или комментарий")
+        if self.status is None and self.comment is None and self.cdek_tracking_number is None:
+            raise ValueError("Передайте статус, комментарий или трек СДЭК")
         return self
 
 
@@ -25,6 +26,7 @@ class OrderOut(BaseModel):
     order_number: str
     message_text: str
     comment: str
+    cdek_tracking_number: str
     status: OrderStatus
     forwarded_from: str | None
     created_by_name: str | None
