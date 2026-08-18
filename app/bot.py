@@ -7,10 +7,11 @@ from aiogram import Bot, Dispatcher, F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import (
     BotCommand,
-    KeyboardButton,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
     MenuButtonWebApp,
     Message,
-    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
     WebAppInfo,
 )
 
@@ -23,13 +24,12 @@ logger = logging.getLogger(__name__)
 router = Router(name="orders")
 
 
-def orders_keyboard() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="Открыть заказы", web_app=WebAppInfo(url=settings.webapp_url))],
-        ],
-        resize_keyboard=True,
-        is_persistent=True,
+def orders_keyboard() -> InlineKeyboardMarkup:
+    """Кнопка под сообщением: она передаёт подписанные данные Mini App."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Открыть заказы", web_app=WebAppInfo(url=settings.webapp_url))],
+        ]
     )
 
 
@@ -85,7 +85,10 @@ async def start(message: Message) -> None:
     if await _deny_if_needed(message):
         return
     await message.answer(
-        "Здравствуйте! Перешлите мне сообщение с заказом — я добавлю его в общий список.\n\n"
+        "Здравствуйте! Перешлите мне сообщение с заказом — я добавлю его в общий список.",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+    await message.answer(
         "Кнопка «Открыть заказы» покажет все заказы и их статусы.",
         reply_markup=orders_keyboard(),
     )
