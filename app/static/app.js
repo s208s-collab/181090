@@ -108,10 +108,18 @@
       link.href = phone.href;
       link.textContent = phone.value;
       link.setAttribute("aria-label", `Позвонить ${phone.value}`);
+      link.addEventListener("click", (event) => startPhoneCall(event, phone.href));
       container.append(link);
       cursor = phone.end;
     }
     container.append(document.createTextNode(text.slice(cursor)));
+  }
+
+  function startPhoneCall(event, phoneHref) {
+    // В Telegram Mini App явно передаём tel: системе, чтобы открыть звонилку.
+    event.preventDefault();
+    tg?.HapticFeedback?.impactOccurred("light");
+    window.location.href = phoneHref;
   }
 
   async function copyText(text) {
@@ -225,6 +233,7 @@
           call.className = "call-button";
           call.href = phone.href;
           call.textContent = `Позвонить: ${phone.value}`;
+          call.addEventListener("click", (event) => startPhoneCall(event, phone.href));
           callActions.append(call);
         }
         inner.append(callActions);
