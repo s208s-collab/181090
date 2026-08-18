@@ -22,6 +22,7 @@ class OrderOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    order_number: str
     message_text: str
     comment: str
     status: OrderStatus
@@ -30,4 +31,3 @@ class OrderOut(BaseModel):
     updated_by_name: str | None
     created_at: datetime
     updated_at: datetime
-

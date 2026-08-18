@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
+import re
 
 from sqlalchemy import DateTime, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -38,3 +39,8 @@ class Order(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
+    @property
+    def order_number(self) -> str:
+        """Номер, который указан в пересланном сообщении клиента."""
+        match = re.search(r"(?m)^\s*(?:№\s*)?(\d{1,12})\s*(?:[)\].:—–-]|$)", self.message_text)
+        return match.group(1) if match else str(self.id)

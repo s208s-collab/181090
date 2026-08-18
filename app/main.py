@@ -78,4 +78,18 @@ async def update_order(
     return order
 
 
+@app.delete("/api/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["orders"])
+async def delete_order(
+    order_id: int,
+    _: Annotated[MiniAppUser, Depends(require_mini_app_user)],
+    session: Annotated[Session, Depends(get_session)],
+) -> None:
+    order = session.get(Order, order_id)
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Заказ не найден")
+
+    session.delete(order)
+    session.commit()
+
+
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
