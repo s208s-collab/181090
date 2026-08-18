@@ -19,6 +19,8 @@
     ["Доставлен", "delivered"],
   ];
   const statusClass = Object.fromEntries(STATUS);
+  // Номера в российских форматах: +7 999 123-45-67, 8 (999) 123-45-67 и т.п.
+  const PHONE_PATTERN = /(?:(?:\+7|8|7)[\s(.-]*\d{3}[\s).-]*\d{3}[\s.-]*\d{2}[\s.-]*\d{2}|\b\d{3}[\s(.-]*\d{3}[\s).-]*\d{2}[\s.-]*\d{2})/g;
 
   const elements = {
     orders: document.querySelector("#orders"),
@@ -78,6 +80,57 @@
     return option;
   }
 
+  function phoneMatches(text) {
+    const pattern = new RegExp(PHONE_PATTERN.source, "g");
+    const found = [];
+    let match;
+
+    while ((match = pattern.exec(text)) !== null) {
+      const digits = match[0].replace(/\D/g, "");
+      if (digits.length !== 10 && digits.length !== 11) continue;
+
+      found.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        value: match[0],
+        href: digits.length === 10 ? `tel:+7${digits}` : `tel:+7${digits.slice(1)}`,
+      });
+    }
+    return found;
+  }
+
+  function appendMessageWithPhoneLinks(container, text, phones) {
+    let cursor = 0;
+    for (const phone of phones) {
+      container.append(document.createTextNode(text.slice(cursor, phone.start)));
+      const link = document.createElement("a");
+      link.className = "phone-link";
+      link.href = phone.href;
+      link.textContent = phone.value;
+      link.setAttribute("aria-label", `Позвонить ${phone.value}`);
+      container.append(link);
+      cursor = phone.end;
+    }
+    container.append(document.createTextNode(text.slice(cursor)));
+  }
+
+  async function copyText(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const helper = document.createElement("textarea");
+    helper.value = text;
+    helper.setAttribute("readonly", "");
+    helper.style.cssText = "position:fixed;opacity:0;pointer-events:none";
+    document.body.append(helper);
+    helper.select();
+    const copied = document.execCommand("copy");
+    helper.remove();
+    if (!copied) throw new Error("Не удалось скопировать текст.");
+  }
+
   function setupStatusFilter() {
     for (const [name] of STATUS) {
       elements.statusFilter.append(createOption(name, false));
@@ -134,13 +187,48 @@
         inner.append(source);
       }
 
+      const messageHeader = document.createElement("div");
+      messageHeader.className = "message-header";
       const messageLabel = document.createElement("span");
       messageLabel.className = "message-label";
       messageLabel.textContent = "Текст заказа";
+      const copy = document.createElement("button");
+      copy.className = "copy-button";
+      copy.type = "button";
+      copy.textContent = "Копировать";
+      copy.addEventListener("click", async () => {
+        copy.disabled = true;
+        setError();
+        try {
+          await copyText(order.message_text);
+          copy.textContent = "Скопировано ✓";
+          tg?.HapticFeedback?.notificationOccurred("success");
+          window.setTimeout(() => { copy.textContent = "Копировать"; copy.disabled = false; }, 1800);
+        } catch (error) {
+          copy.disabled = false;
+          setError(error.message || "Не удалось скопировать текст.");
+        }
+      });
+      messageHeader.append(messageLabel, copy);
       const message = document.createElement("p");
       message.className = "message-text";
-      message.textContent = order.message_text;
-      inner.append(messageLabel, message);
+      const phones = phoneMatches(order.message_text);
+      appendMessageWithPhoneLinks(message, order.message_text, phones);
+      inner.append(messageHeader, message);
+
+      const uniquePhones = [...new Map(phones.map((phone) => [phone.href, phone])).values()];
+      if (uniquePhones.length) {
+        const callActions = document.createElement("div");
+        callActions.className = "call-actions";
+        for (const phone of uniquePhones) {
+          const call = document.createElement("a");
+          call.className = "call-button";
+          call.href = phone.href;
+          call.textContent = `Позвонить: ${phone.value}`;
+          callActions.append(call);
+        }
+        inner.append(callActions);
+      }
 
       const commentLabel = document.createElement("label");
       commentLabel.className = "comment-label";
