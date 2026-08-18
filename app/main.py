@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.auth import MiniAppUser, require_mini_app_user
 from app.bot import prepare_bot, run_bot
 from app.config import settings
-from app.database import Base, engine, get_session
+from app.database import Base, engine, get_session, upgrade_schema
 from app.models import Order
 from app.schemas import OrderOut, OrderUpdate
 
@@ -28,6 +28,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     settings.validate_for_runtime()
     Base.metadata.create_all(bind=engine)
+    upgrade_schema()
     # Проверяем токен и URL кнопки до того, как сервис станет доступен.
     bot, dispatcher = await prepare_bot()
     bot_task = asyncio.create_task(run_bot(bot, dispatcher), name="telegram-bot-polling")
