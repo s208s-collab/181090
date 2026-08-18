@@ -39,6 +39,12 @@ button, select, textarea { font: inherit; }
   padding: 4px 0 16px;
 }
 
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .eyebrow {
   margin: 0 0 2px;
   color: var(--accent);
@@ -248,6 +254,22 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
   cursor: pointer;
 }
 
+.owner-contact-button, .contact-owner-button {
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid #3774a8;
+  border-radius: 9px;
+  background: #eef6ff;
+  color: #1f6097;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.top-actions .owner-contact-button { min-height: 40px; }
+
+.contact-owner-button:disabled { cursor: wait; opacity: 0.65; }
+
 .card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .delete-button {
@@ -303,6 +325,9 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
 }
 
 @media (max-width: 410px) {
+  .topbar { align-items: flex-start; }
+  .top-actions { align-items: flex-end; flex-direction: column; gap: 5px; }
+  .top-actions .owner-contact-button { min-height: 34px; padding: 6px 9px; font-size: 12px; }
   .order-heading { flex-direction: column; }
   .status-select { width: 100%; max-width: none; }
   .card-footer { align-items: flex-start; flex-direction: column; }
