@@ -23,9 +23,16 @@
       <section class="summary" aria-live="polite">
         <div>
           <span id="order-count">—</span>
-          <small>всего заказов</small>
+          <small id="order-count-label">всего заказов</small>
         </div>
         <p id="sync-status">Загрузка…</p>
+      </section>
+
+      <section class="filters" aria-label="Фильтр заказов">
+        <label for="status-filter">Статус</label>
+        <select id="status-filter">
+          <option value="">Все статусы</option>
+        </select>
       </section>
 
       <p id="app-error" class="app-error" hidden></p>
@@ -42,4 +49,3 @@
     <script src="/app.js" defer></script>
   </body>
 </html>
-

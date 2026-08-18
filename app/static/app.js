@@ -5,6 +5,7 @@
   const isDevBrowser = new URLSearchParams(window.location.search).get("dev") === "1";
   const REFRESH_INTERVAL_MS = 4000;
   let isLoading = false;
+  let allOrders = [];
 
   const STATUS = [
     ["Новый", "new"],
@@ -22,9 +23,11 @@
   const elements = {
     orders: document.querySelector("#orders"),
     count: document.querySelector("#order-count"),
+    countLabel: document.querySelector("#order-count-label"),
     sync: document.querySelector("#sync-status"),
     error: document.querySelector("#app-error"),
     refresh: document.querySelector("#refresh-button"),
+    statusFilter: document.querySelector("#status-filter"),
   };
 
   if (tg) {
@@ -54,6 +57,7 @@
       } catch (_) { /* Оставляем понятное сообщение по умолчанию. */ }
       throw new Error(message);
     }
+    if (response.status === 204) return null;
     return response.json();
   }
 
@@ -74,18 +78,35 @@
     return option;
   }
 
+  function setupStatusFilter() {
+    for (const [name] of STATUS) {
+      elements.statusFilter.append(createOption(name, false));
+    }
+    elements.statusFilter.addEventListener("change", () => renderOrders(allOrders));
+  }
+
+  function visibleOrders(orders) {
+    const selectedStatus = elements.statusFilter.value;
+    return selectedStatus ? orders.filter((order) => order.status === selectedStatus) : orders;
+  }
+
   function renderOrders(orders) {
     elements.orders.replaceChildren();
-    elements.count.textContent = String(orders.length);
+    const visible = visibleOrders(orders);
+    elements.count.textContent = String(visible.length);
+    elements.countLabel.textContent = elements.statusFilter.value
+      ? `из ${orders.length} заказов`
+      : "всего заказов";
 
-    if (orders.length === 0) {
+    if (visible.length === 0) {
       const template = document.querySelector("#empty-state-template");
       elements.orders.append(template.content.cloneNode(true));
       return;
     }
 
-    for (const order of orders) {
+    for (const order of visible) {
       const status = statusClass[order.status] || "new";
+      const displayNumber = order.order_number || String(order.id);
       const card = document.createElement("article");
       card.className = `order-card status-${status}`;
       card.dataset.orderId = String(order.id);
@@ -97,10 +118,10 @@
       heading.className = "order-heading";
       const number = document.createElement("span");
       number.className = "order-number";
-      number.textContent = `№${order.id}`;
+      number.textContent = `№${displayNumber}`;
       const select = document.createElement("select");
       select.className = "status-select";
-      select.setAttribute("aria-label", `Статус заказа №${order.id}`);
+      select.setAttribute("aria-label", `Статус заказа №${displayNumber}`);
       for (const [name] of STATUS) select.append(createOption(name, order.status));
       select.addEventListener("change", () => saveUpdate(order.id, { status: select.value }, select));
       heading.append(number, select);
@@ -129,7 +150,7 @@
       textarea.maxLength = 2000;
       textarea.value = order.comment || "";
       textarea.placeholder = "Например: позвонить за час, адрес уточнить…";
-      textarea.setAttribute("aria-label", `Комментарий к заказу №${order.id}`);
+      textarea.setAttribute("aria-label", `Комментарий к заказу №${displayNumber}`);
       inner.append(commentLabel, textarea);
 
       const footer = document.createElement("div");
@@ -139,12 +160,20 @@
       save.type = "button";
       save.textContent = "Сохранить комментарий";
       save.addEventListener("click", () => saveUpdate(order.id, { comment: textarea.value }, save));
+      const remove = document.createElement("button");
+      remove.className = "delete-button";
+      remove.type = "button";
+      remove.textContent = "Удалить";
+      remove.addEventListener("click", () => deleteOrder(order.id, displayNumber, remove));
+      const actions = document.createElement("div");
+      actions.className = "card-actions";
+      actions.append(save, remove);
       const meta = document.createElement("p");
       meta.className = "meta";
       meta.textContent = order.updated_by_name
         ? `Изменил(а): ${order.updated_by_name}\n${formatDate(order.updated_at)}`
         : `Добавлен: ${formatDate(order.created_at)}`;
-      footer.append(save, meta);
+      footer.append(actions, meta);
       inner.append(footer);
       card.append(inner);
       elements.orders.append(card);
@@ -169,13 +198,29 @@
     }
   }
 
+  async function deleteOrder(orderId, displayNumber, control) {
+    if (!window.confirm(`Удалить заказ №${displayNumber}? Это действие нельзя отменить.`)) return;
+
+    control.disabled = true;
+    setError();
+    try {
+      await request(`/api/orders/${orderId}`, { method: "DELETE" });
+      tg?.HapticFeedback?.notificationOccurred("success");
+      await loadOrders();
+    } catch (error) {
+      tg?.HapticFeedback?.notificationOccurred("error");
+      setError(error.message);
+      control.disabled = false;
+    }
+  }
+
   async function loadOrders() {
     if (isLoading || document.activeElement?.classList?.contains("comment-field")) return;
     isLoading = true;
     elements.refresh.disabled = true;
     try {
-      const orders = await request("/api/orders");
-      renderOrders(orders);
+      allOrders = await request("/api/orders");
+      renderOrders(allOrders);
       setError();
       elements.sync.textContent = `Обновлено ${new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
     } catch (error) {
@@ -188,7 +233,7 @@
   }
 
   elements.refresh.addEventListener("click", loadOrders);
+  setupStatusFilter();
   loadOrders();
   window.setInterval(loadOrders, REFRESH_INTERVAL_MS);
 })();
-

@@ -82,6 +82,31 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
 .summary small, #sync-status { color: #5d5147; font-size: 13px; }
 #sync-status { margin: 0; text-align: right; }
 
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.filters label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.filters select {
+  min-height: 38px;
+  flex: 1;
+  max-width: 270px;
+  padding: 7px 32px 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+  background: var(--card-bg);
+  color: var(--text);
+}
+
 .orders-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -185,7 +210,21 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
   cursor: pointer;
 }
 
-.save-button:disabled, .status-select:disabled { cursor: wait; opacity: 0.6; }
+.card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.delete-button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.save-button:disabled, .delete-button:disabled, .status-select:disabled { cursor: wait; opacity: 0.6; }
 .save-button:active { transform: scale(0.98); }
 .meta { margin: 0; text-align: right; line-height: 1.3; }
 
@@ -229,6 +268,7 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
   .order-heading { flex-direction: column; }
   .status-select { width: 100%; max-width: none; }
   .card-footer { align-items: flex-start; flex-direction: column; }
+  .filters { align-items: flex-start; flex-direction: column; }
+  .filters select { width: 100%; max-width: none; }
   .meta { text-align: left; }
 }
-
