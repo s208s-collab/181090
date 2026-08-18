@@ -115,11 +115,11 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
 
 .order-card {
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-left: 6px solid var(--status-color, #8b968f);
+  border: 1px solid color-mix(in srgb, var(--status-color, #8b968f) 40%, var(--line));
+  border-left: 9px solid var(--status-color, #8b968f);
   border-radius: var(--radius);
-  background: var(--card-bg);
-  box-shadow: 0 1px 1px rgba(39, 37, 31, 0.03);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--status-color) 13%, var(--card-bg)), var(--card-bg) 58%);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--status-color) 12%, transparent);
 }
 
 .order-card-inner { padding: 15px; }
@@ -136,17 +136,20 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
 
 .status-select {
   max-width: 208px;
-  min-height: 36px;
+  min-height: 42px;
   padding: 6px 30px 6px 10px;
-  border: 1px solid color-mix(in srgb, var(--status-color) 35%, transparent);
+  border: 0;
   border-radius: 10px;
   outline: none;
-  background: color-mix(in srgb, var(--status-color) 15%, var(--card-bg));
-  color: var(--text);
+  background: var(--status-color);
+  color: #ffffff;
   font-size: 13px;
   font-weight: 700;
+  box-shadow: 0 2px 5px color-mix(in srgb, var(--status-color) 42%, transparent);
   cursor: pointer;
 }
+
+.status-select option { background: var(--card-bg); color: var(--text); }
 
 .source, .meta {
   margin-bottom: 11px;
@@ -164,6 +167,29 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
   text-transform: uppercase;
 }
 
+.message-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.message-header .message-label { margin-bottom: 5px; }
+
+.copy-button {
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.copy-button:disabled { opacity: 0.7; }
+
 .message-text {
   max-height: 360px;
   margin: 0 0 14px;
@@ -173,6 +199,33 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 38px); line-height: 1.06; }
   line-height: 1.42;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.phone-link {
+  border-bottom: 2px solid var(--accent);
+  color: #9d3d1e;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.call-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -5px 0 15px;
+}
+
+.call-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  background: #1e8358;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .comment-field {
