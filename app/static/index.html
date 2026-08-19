@@ -34,10 +34,16 @@
       </section>
 
       <section class="filters" aria-label="Фильтр заказов">
-        <label for="status-filter">Статус</label>
-        <select id="status-filter">
-          <option value="">Все статусы</option>
-        </select>
+        <label class="search-field" for="message-search">
+          <span>Поиск по сообщению</span>
+          <input id="message-search" type="search" placeholder="Имя, телефон, товар, адрес…" autocomplete="off" />
+        </label>
+        <label class="status-field" for="status-filter">
+          <span>Статус</span>
+          <select id="status-filter">
+            <option value="">Все активные</option>
+          </select>
+        </label>
       </section>
 
       <p id="app-error" class="app-error" hidden></p>
