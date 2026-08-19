@@ -31,6 +31,7 @@
     refresh: document.querySelector("#refresh-button"),
     contactOwner: document.querySelector("#contact-owner-button"),
     statusFilter: document.querySelector("#status-filter"),
+    messageSearch: document.querySelector("#message-search"),
   };
 
   if (tg) {
@@ -197,11 +198,18 @@
       elements.statusFilter.append(createOption(name, false));
     }
     elements.statusFilter.addEventListener("change", () => renderOrders(allOrders));
+    elements.messageSearch.addEventListener("input", () => renderOrders(allOrders));
   }
 
   function visibleOrders(orders) {
     const selectedStatus = elements.statusFilter.value;
-    return selectedStatus ? orders.filter((order) => order.status === selectedStatus) : orders;
+    const searchText = elements.messageSearch.value.trim().toLocaleLowerCase("ru-RU");
+    return orders.filter((order) => {
+      // Выполненные заказы не мешают работе: они видны только через фильтр «Доставлен».
+      if (!selectedStatus && order.status === "Доставлен") return false;
+      if (selectedStatus && order.status !== selectedStatus) return false;
+      return !searchText || order.message_text.toLocaleLowerCase("ru-RU").includes(searchText);
+    });
   }
 
   function sortOrdersByNumber(orders) {
@@ -227,7 +235,7 @@
     elements.count.textContent = String(visible.length);
     elements.countLabel.textContent = elements.statusFilter.value
       ? `из ${orders.length} заказов`
-      : "всего заказов";
+      : "активных заказов";
 
     if (visible.length === 0) {
       const template = document.querySelector("#empty-state-template");
@@ -247,15 +255,21 @@
 
       const heading = document.createElement("div");
       heading.className = "order-heading";
+      const orderPrimary = document.createElement("div");
+      orderPrimary.className = "order-primary";
       const number = document.createElement("span");
       number.className = "order-number";
       number.textContent = `№${displayNumber}`;
+      const createdAt = document.createElement("p");
+      createdAt.className = "order-created-at";
+      createdAt.textContent = `Добавлен: ${formatDate(order.created_at)}`;
+      orderPrimary.append(number, createdAt);
       const select = document.createElement("select");
       select.className = "status-select";
       select.setAttribute("aria-label", `Статус заказа №${displayNumber}`);
       for (const [name] of STATUS) select.append(createOption(name, order.status));
       select.addEventListener("change", () => saveUpdate(order.id, { status: select.value }, select));
-      heading.append(number, select);
+      heading.append(orderPrimary, select);
       inner.append(heading);
 
       if (order.forwarded_from) {
